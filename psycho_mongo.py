@@ -48,6 +48,13 @@ def GetKeys(p):
 
 	return keys
 
+def GetValues(field, table, condition={}):
+	output = []
+	for row in table.find(condition):
+		if row.has_key(field):
+			output.append(row[field])
+	return output
+
 def KeySafe(key):
 	key = key.replace(".", "_")
 	return key
@@ -89,7 +96,7 @@ class ReadFile:
 							from the data files, put the header names in this list
 	sep (String) - the character which separates data in your data file
 	"""
-	def __init__(self, fileName, dbName, tableName, data=None, kind="", clear=False, startLine=0, columns=[], sep=",", addrow={}):
+	def __init__(self, fileName, dbName, tableName, data=None, kind="", clear=False, startLine=0, columns=[], sep=",", addrow={}, empty="not_recoverable"):
 
 		db = Connect(dbName, tableName)
 		table = db.table
@@ -98,12 +105,10 @@ class ReadFile:
 			table.remove()
 
 		self.table = table
-
+		self.empty = empty
 		self.sep = ","
-
 		self.startLine = startLine
 		self.columns = columns
-
 		self.addrow = addrow
 
 		if fileName:
@@ -114,6 +119,7 @@ class ReadFile:
 				self.fileList = [fileName]
 
 			for myFile in self.fileList:
+				print myFile
 				lines = open(myFile, 'r').readlines()
 				self.process(lines, myFile)
 
@@ -138,9 +144,21 @@ class ReadFile:
 		print "Processing as CSV"
 		r = csv.reader(open(thefile, 'r'))
 
-
 		#get the headers, make the variables
 		headers = r.next()
+
+		if headers[0].startswith('STRING\t'):
+			r = csv.reader(open(thefile, 'r'), delimiter='\t')
+
+			print "CRAZY EPRIME FILE"
+			r.next()
+			r.next()
+			r.next()
+
+			headers = r.next()
+
+		#first let's check whether we have a crazy e prime file
+
 		headers = map(strip, headers)
 		#make sure the keys are all safe
 		headers = map(KeySafe, headers)
@@ -164,9 +182,12 @@ class ReadFile:
 				try:
 					value = line[index[k]]
 					if value:
-						row[k] = StringToType(value)
+						if StringToType(value) != self.empty:
+							row[k] = StringToType(value)
+						else:
+							print value
 				except:
-						print "I shat myself because of %s" % line[index[k]]
+						print "Error uploading value  %s" % line[index[k]]
 
 			if self.addrow:
 				row = dict(row, **self.addrow)
@@ -174,7 +195,7 @@ class ReadFile:
 			try:
 				self.table.insert(row)
 			except: 
-				print "I peed myself because of %s" % row
+				print "Error uploading row %s" % row
 
 	def processEPrime(self, lines):
 		print "processing as E-Prime"
