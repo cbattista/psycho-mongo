@@ -10,6 +10,8 @@ import string
 import glob
 import os
 import csv
+import pylab
+import numpy
 
 def dictString(d):
 	output = ""
@@ -46,14 +48,20 @@ def GetKeys(p):
 
 	keys = result.distinct("_id")
 
+	keys.remove("_id")
+
 	return keys
 
-def GetValues(field, table, condition={}):
+def GetValues(field, table, condition={}, asArray=False):
 	output = []
 	for row in table.find(condition):
 		if row.has_key(field):
 			output.append(row[field])
+	if asArray:
+		output = numpy.array(output)
+
 	return output
+
 
 def KeySafe(key):
 	key = key.replace(".", "_")
@@ -106,7 +114,7 @@ class ReadFile:
 
 		self.table = table
 		self.empty = empty
-		self.sep = ","
+		self.sep = sep
 		self.startLine = startLine
 		self.columns = columns
 		self.addrow = addrow
@@ -117,9 +125,9 @@ class ReadFile:
 				self.fileList = glob.glob(fileName)
 			else:
 				self.fileList = [fileName]
+				self.addrow = dict(addrow, **{'source_file':fileName})
 
 			for myFile in self.fileList:
-				print myFile
 				lines = open(myFile, 'r').readlines()
 				self.process(lines, myFile)
 
@@ -141,8 +149,13 @@ class ReadFile:
 
 
 	def processCSV(self, thefile):
-		print "Processing as CSV"
-		r = csv.reader(open(thefile, 'r'))
+		f = open(thefile, 'r')
+
+		r = csv.reader(f, delimiter=self.sep)
+
+		print self.sep
+
+		print thefile
 
 		#get the headers, make the variables
 		headers = r.next()
@@ -156,6 +169,8 @@ class ReadFile:
 			r.next()
 
 			headers = r.next()
+
+		print headers
 
 		#first let's check whether we have a crazy e prime file
 
@@ -176,6 +191,7 @@ class ReadFile:
 				VARs[k] = []
 
 		for line in r:
+			print line
 			line = map(strip, line)
 			row = {}
 			for k in VARs.keys():
@@ -184,10 +200,9 @@ class ReadFile:
 					if value:
 						if StringToType(value) != self.empty:
 							row[k] = StringToType(value)
-						else:
-							print value
 				except:
-						print "Error uploading value  %s" % line[index[k]]
+						if line:
+							print "Error uploading value  %s" % line[index[k]]
 
 			if self.addrow:
 				row = dict(row, **self.addrow)
@@ -198,9 +213,6 @@ class ReadFile:
 				print "Error uploading row %s" % row
 
 	def processEPrime(self, lines):
-		print "processing as E-Prime"
-
-
 		i1 = lines.index("*** Header Start ***")
 		i2 = lines.index("*** Header End ***")
 
