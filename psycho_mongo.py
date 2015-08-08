@@ -10,7 +10,6 @@ import string
 import glob
 import os
 import csv
-import pylab
 import numpy
 
 def dictString(d):
@@ -128,6 +127,7 @@ class ReadFile:
 				self.addrow = dict(addrow, **{'source_file':fileName})
 
 			for myFile in self.fileList:
+				self.addrow = dict(addrow, **{'source_file':myFile})
 				lines = open(myFile, 'r').readlines()
 				self.process(lines, myFile)
 
@@ -149,7 +149,7 @@ class ReadFile:
 
 
 	def processCSV(self, thefile):
-		f = open(thefile, 'r')
+		f = open(thefile, 'rU')
 
 		r = csv.reader(f, delimiter=self.sep)
 
