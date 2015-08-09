@@ -56,7 +56,7 @@ class DesignMatrix:
 
 		self.fileList = []
 
-	def make(self, field, conditions, stim_onset, acc="ACC", rt="RT", trial="trial", balance = False, name="", query={}, sess_name="session name"):
+	def make(self, field, conditions, stim_onset, acc="ACC", rt="RT", trial="trial", balance = False, name="", query={}, sess_name="session name", output_dir=""):
 		"""
 		This function organizes the onsets and durations into a dict called self.prtDict
 		It then calls the various writing functions
@@ -170,10 +170,13 @@ class DesignMatrix:
 				self.prtDict = prtDict
 				self.setColors()
 				self.makePRT()
-				name = "%s_%s_%s_%s" % (self.table, field, subject, run)
+				name = "%s_%s_%s" % (subject, self.table, run)
+				sess_name = "%s_%s" % (self.table, run)
+				if output_dir:
+					name = os.path.join(output_dir, name)
 				self.name = name
 				#self.writePRT(name)
-				self.writeSPM(name)
+				self.writeSPM(name, sess_name)
 				#self.writeEV(name)
 
 	#generate a list of colours from the prtDict
@@ -265,7 +268,7 @@ class DesignMatrix:
 		f.close()
 		self.fileList.append(fname)
 
-	def writeSPM(self, name=""):
+	def writeSPM(self, name="", sess_name = ""):
 		import scipy.io
 		import numpy
 
@@ -278,7 +281,7 @@ class DesignMatrix:
 
 		f = open(fname, 'w')
 
-		f.write("sess_name = '%s';\n\n" % self.sess_name)
+		f.write("sess_name = '%s';\n\n" % sess_name)
 
 		conditions = data.keys()
 
