@@ -269,7 +269,6 @@ class DesignMatrix:
 		self.fileList.append(fname)
 
 	def writeSPM(self, name="", sess_name = ""):
-		import scipy.io
 		import numpy
 
 		data = self.prtDict
