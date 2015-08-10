@@ -294,15 +294,19 @@ class DesignMatrix:
 			i = conditions.index(cond) + 1
 			output += "names{%i} = ['%s'];\n" % (i, cond)
 			onsets = self.prtDict[cond]
-			onset_vector = []
-			duration_vector = []
+			onset_string = "["
+			duration_string = "["
+
 			for onset in onsets:
 				on = onset.split(' ')[0]
-				onset_vector.append("%0.2f" % float(on))
-				duration_vector.append("%0.1f" % self.duration)
+				onset_string += "%0.2f, " % float(on)
+				duration_string += "%0.2f, " % self.duration
 
-			output += "onsets{%i} = %s;\n" % (i, str(onset_vector))
-			output += "durations{%i} = %s;\n\n" % (i, str(duration_vector))
+			onset_string = onset_string.rstrip(", ")
+			duration_string = duration_string.rstrip(", ")
+
+			output += "onsets{%i} = %s;\n" % (i, onset_string)
+			output += "durations{%i} = %s;\n\n" % (i, duration_string)
 
 		output += "rest_exists = 1;\n\n"
 		output += "save task_design.mat sess_name names onsets durations rest_exists"
