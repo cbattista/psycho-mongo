@@ -305,6 +305,9 @@ class DesignMatrix:
 			onset_string = onset_string.rstrip(", ")
 			duration_string = duration_string.rstrip(", ")
 
+			onset_string += "];"
+			duration_string += "];"
+
 			output += "onsets{%i} = %s;\n" % (i, onset_string)
 			output += "durations{%i} = %s;\n\n" % (i, duration_string)
 
