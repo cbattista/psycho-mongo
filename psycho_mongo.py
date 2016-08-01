@@ -3,7 +3,7 @@ Christian's MongoDB Tools FTW
 """
 
 import pymongo
-from pymongo import Connection
+from pymongo import MongoClient
 from bson import Code
 import copy
 import string
@@ -26,15 +26,15 @@ class Connect:
 	"""
 	def __init__(self, db="test_database", table=""):
 
-		try:		
-			self.connection = Connection()
+		try:
+			self.connection = MongoClient()
 		except:
 			os.system("nohup mongod --dbpath /home/xian/ &")
 		self.dbName = db
 		self.db = self.connection[db]
 		if table:
 			self.setTable(table)
-	
+
 	def setTable(self, table):
 		self.table = self.db[table]
 		return self.table
@@ -53,14 +53,28 @@ def GetKeys(p):
 
 def GetValues(field, table, condition={}, asArray=False):
 	output = []
-	for row in table.find(condition):
-		if row.has_key(field):
-			output.append(row[field])
+	if type(field) != list:
+		for row in table.find(condition):
+			if row.has_key(field):
+				output.append(row[field])
+			else:
+				output.append(numpy.NaN)
+	else:
+		for row in table.find(condition):
+			outrow = []
+
+			for f in field:
+				if row.has_key(f):
+					outrow.append(row[f])
+				else:
+					outrow.append(numpy.NaN)
+
+			output.append(outrow)
+
 	if asArray:
-		output = numpy.array(output)
+		output = numpy.ma.masked_array(output)
 
 	return output
-
 
 def KeySafe(key):
 	key = key.replace(".", "_")
@@ -96,7 +110,7 @@ class ReadFile:
 	fileName (String) - name of the file, or a pattern to be globbed
 	dbName (String) - name of the DB you'd like to submit this data to
 	tableName (String) - name of the table you'd like to enter this data into
-	clear (Boolean) - Whether or not to erase the contents of the table 
+	clear (Boolean) - Whether or not to erase the contents of the table
 					  before uploading this data into it
 	startLine (int) - The line on which the headers appear in the file
 	columns (String List) - If you want to upload only specific columns
@@ -209,7 +223,7 @@ class ReadFile:
 
 			try:
 				self.table.insert(row)
-			except: 
+			except:
 				print "Error uploading row %s" % row
 
 	def processEPrime(self, lines):
@@ -250,7 +264,7 @@ class ReadFile:
 						row[KeySafe(frags[0])] = StringToType(frags[1])
 				else:
 					row[KeySafe(frags[0])] = StringToType(frags[1])
-	
+
 			elif d == "*** LogFrame End ***":
 				if row:
 					row['trial'] = trial
